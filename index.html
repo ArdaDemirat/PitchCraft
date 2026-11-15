@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PitchCraft Studio — Sunum Grafikleri & Rehberli GDD Stüdyosu</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Header -->
+    <header class="topbar no-print">
+      <div class="topbar-left">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">◆</div>
+          <div class="brand-text">
+            <span class="brand-name">PitchCraft</span>
+            <span class="brand-badge">Studio</span>
+          </div>
+        </div>
+
+        <div class="divider-v"></div>
+
+        <div class="project-title-wrap" title="Proje adını düzenlemek için tıklayın">
+          <span class="project-label">Proje:</span>
+          <input
+            type="text"
+            id="projectTitleInput"
+            class="project-title-input"
+            value="Chrono Blade"
+            aria-label="Proje Adı"
+          />
+          <span class="save-indicator" id="saveIndicator">● Otomatik kaydedildi</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="preset-group">
+          <label for="presetSelector" class="sr-only">Örnek Proje Yükle</label>
+          <select id="presetSelector" class="select-compact" title="Örnek proje yükle">
+            <option value="">✨ Örnek Proje Yükle...</option>
+            <option value="chrono-blade">⚔️ Chrono Blade (Roguelike Oyun)</option>
+            <option value="moonlight-bakery">🥐 Moonlight Bakery (Cozy Sim)</option>
+            <option value="flowpulse">🚀 FlowPulse (Girişim / SaaS)</option>
+          </select>
+        </div>
+
+        <button id="exportJsonBtn" class="btn btn-ghost btn-sm" title="Projeyi JSON olarak yedekle">
+          💾 Yedekle (.json)
+        </button>
+        <label class="btn btn-ghost btn-sm upload-label" title="JSON yedeğinden proje yükle">
+          📂 Yükle
+          <input type="file" id="importJsonInput" accept=".json,application/json" hidden />
+        </label>
+        <button id="exportMdHeaderBtn" class="btn btn-ghost btn-sm" title="GDD ve planı Markdown (.md) olarak indir">
+          📝 .md İndir
+        </button>
+        <button id="printPdfHeaderBtn" class="btn btn-primary btn-sm" title="One-Page Özeti PDF olarak kaydet veya yazdır">
+          🖨️ PDF / Yazdır
+        </button>
+
+        <button id="themeToggleBtn" class="btn btn-icon" title="Açık / Koyu Tema Değiştir" aria-label="Tema Değiştir">
+          <span id="themeToggleIcon">🌙</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace-body">
+      <!-- Left Sidebar -->
+      <aside class="sidebar no-print">
+        <nav class="sidebar-nav" aria-label="Ana Menü">
+          <div class="nav-group-label">STÜDYO ARAÇLARI</div>
+          <button class="nav-item active" data-view="charts">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Sunum Grafikleri</span>
+            <span class="nav-pill">6 Araç</span>
+          </button>
+          <button class="nav-item" data-view="gdd">
+            <span class="nav-icon">📘</span>
+            <span class="nav-label">Rehberli GDD</span>
+            <span class="nav-pill" id="sidebarGddPct">0%</span>
+          </button>
+          <button class="nav-item" data-view="onepage">
+            <span class="nav-icon">📄</span>
+            <span class="nav-label">One-Page Özet</span>
+            <span class="nav-pill">PDF/MD</span>
+          </button>
+          <button class="nav-item" data-view="checklist">
+            <span class="nav-icon">✅</span>
+            <span class="nav-label">Sunum Checklist</span>
+            <span class="nav-pill" id="sidebarCheckPct">0%</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-cards">
+          <div class="progress-card">
+            <div class="progress-card-header">
+              <span>GDD Tamamlanma</span>
+              <strong id="sidebarGddLabel">0/8</strong>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="sidebarGddBar" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="progress-card">
+            <div class="progress-card-header">
+              <span>Sunum Hazırlığı</span>
+              <strong id="sidebarCheckLabel">0/16</strong>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill accent-emerald" id="sidebarCheckBar" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="tip-box">
+            <div class="tip-box-title">💡 Sunum İpucu</div>
+            <p class="tip-box-text">
+              PowerPoint veya Canva slaytlarınızın arka planına tam oturması için grafikleri
+              <strong>Şeffaf PNG</strong> olarak indirebilirsiniz.
+            </p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Workspace Content -->
+      <main class="main-content">
+        <!-- VIEW 1: PITCH DECK CHART STUDIO -->
+        <section id="view-charts" class="view-section active">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Sunum Grafikleri Stüdyosu</h1>
+              <p class="view-subtitle">
+                Oyun ve girişim sunumlarınız için 16:9 yüksek çözünürlüklü, şeffaf arka planlı grafikler oluşturun.
+              </p>
+            </div>
+          </div>
+
+          <!-- Chart Type Tabs -->
+          <div class="chart-tabs" role="tablist" aria-label="Grafik Türleri">
+            <button class="chart-tab active" data-chart="coreLoop">🔄 Core Loop (Temel Döngü)</button>
+            <button class="chart-tab" data-chart="roadmap">🗺️ Roadmap (İş Planı)</button>
+            <button class="chart-tab" data-chart="matrix">🎯 2x2 Rakip Matrisi</button>
+            <button class="chart-tab" data-chart="radar">🕸️ Oyuncu / Özellik Radarı</button>
+            <button class="chart-tab" data-chart="budget">💰 Bütçe & Başa Baş</button>
+            <button class="chart-tab" data-chart="moscow">📦 MoSCoW Kapsam</button>
+          </div>
+
+          <div class="studio-grid">
+            <!-- Left Panel: Data & Controls -->
+            <div class="studio-editor card">
+              <div class="card-header">
+                <h2 id="editorPanelTitle">Grafik Verileri</h2>
+                <span class="badge badge-subtle">Canlı Güncellenir</span>
+              </div>
+              <div id="chartEditorContainer" class="editor-body">
+                <!-- Dynamically rendered per active chart type -->
+              </div>
+            </div>
+
+            <!-- Right Panel: Live 16:9 Canvas & Export -->
+            <div class="studio-preview card">
+              <div class="preview-toolbar">
+                <div class="toolbar-row">
+                  <div class="control-inline">
+                    <label for="chartThemeSelect">Görsel Tema:</label>
+                    <select id="chartThemeSelect" class="select-compact">
+                      <option value="notion-light">Notion Light (Açık)</option>
+                      <option value="linear-dark">Linear Dark (Koyu)</option>
+                      <option value="cyberpunk-neon">Cyberpunk Neon</option>
+                      <option value="cozy-pastel">Cozy Pastel</option>
+                      <option value="emerald-pro">Emerald Pro</option>
+                    </select>
+                  </div>
+
+                  <label class="switch-label" title="Arka planı saydam yapar; sunum slaytlarına doğrudan yapıştırabilirsiniz">
+                    <input type="checkbox" id="transparentBgToggle" />
+                    <span class="switch-slider"></span>
+                    <span>Şeffaf Arka Plan</span>
+                  </label>
+                </div>
+
+                <div class="toolbar-actions">
+                  <button id="downloadTransparentPngBtn" class="btn btn-secondary btn-sm">
+                    📥 Şeffaf PNG İndir
+                  </button>
+                  <button id="downloadThemedPngBtn" class="btn btn-primary btn-sm">
+                    🖼️ Temalı PNG İndir
+                  </button>
+                </div>
+              </div>
+
+              <div class="canvas-stage" id="canvasStage">
+                <canvas id="pitchCanvas" width="1600" height="900"></canvas>
+              </div>
+
+              <div class="canvas-footer-meta">
+                <span>Çözünürlük: <strong>1600 × 900 px (16:9 HD)</strong></span>
+                <span id="canvasModeHint">Mod: Temalı Arka Plan</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 2: GUIDED GDD EDITOR -->
+        <section id="view-gdd" class="view-section">
+          <div class="view-header gdd-header">
+            <div>
+              <h1 class="view-title">Rehberli GDD & Tasarım Dokümanı Editörü</h1>
+              <p class="view-subtitle">
+                Her başlıkta "Buraya ne yazmalıyım?" rehberi, ünlü oyun örnekleri ve tek tıkla doldurulabilir şablonlar.
+              </p>
+            </div>
+
+            <div class="genre-template-box">
+              <label for="genreTemplateSelect">Tür Rehberi:</label>
+              <select id="genreTemplateSelect" class="select-compact">
+                <option value="roguelike">⚔️ Aksiyon / Roguelike</option>
+                <option value="rpg">📜 RPG / Hikaye Macera</option>
+                <option value="cozy">🌱 Cozy / Simülasyon</option>
+                <option value="platformer">🏃 Platformer / Metroidvania</option>
+                <option value="mobile">📱 Mobil / Hybrid-Casual</option>
+                <option value="saas">💼 Girişim / Yazılım Projesi</option>
+              </select>
+              <button id="applyGenreTemplateBtn" class="btn btn-secondary btn-sm" title="Seçili türe göre boş GDD alanlarını veya şablonu doldur">
+                ✨ Tür Şablonunu Uygula
+              </button>
+            </div>
+          </div>
+
+          <div class="gdd-layout">
+            <div class="gdd-toc card">
+              <div class="toc-title">GDD Bölümleri</div>
+              <div id="gddTocList" class="toc-list">
+                <!-- Populated by app.js -->
+              </div>
+            </div>
+
+            <div class="gdd-sections-wrap" id="gddSectionsContainer">
+              <!-- Populated by app.js -->
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 3: ONE-PAGE GDD SUMMARY -->
+        <section id="view-onepage" class="view-section">
+          <div class="view-header no-print">
+            <div>
+              <h1 class="view-title">One-Page GDD Özeti & Çıktı Merkezi</h1>
+              <p class="view-subtitle">
+                Ekip arkadaşları, jüri veya yayıncılar için projenizin tüm özetini tek sayfada görün ve dışa aktarın.
+              </p>
+            </div>
+            <div class="onepage-actions">
+              <button id="copyMarkdownBtn" class="btn btn-secondary btn-sm">📋 Markdown Kopyala</button>
+              <button id="downloadMarkdownBtn" class="btn btn-secondary btn-sm">📝 .md İndir (Notion/GitHub)</button>
+              <button id="printOnePageBtn" class="btn btn-primary btn-sm">🖨️ PDF Olarak Kaydet / Yazdır</button>
+            </div>
+          </div>
+
+          <div id="onePageSheet" class="onepage-sheet card">
+            <!-- Dynamically rendered executive 1-page GDD summary -->
+          </div>
+        </section>
+
+        <!-- VIEW 4: PITCH CHECKLIST -->
+        <section id="view-checklist" class="view-section">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Sunum & Yayıncı Hazırlık Kontrol Listesi</h1>
+              <p class="view-subtitle">
+                Yatırımcıların ve yayıncıların sunumda mutlaka görmek istediği maddeleri tamamlayın.
+              </p>
+            </div>
+            <div class="checklist-score-badge" id="checklistScoreBadge">
+              Hazırlık Puanı: 0%
+            </div>
+          </div>
+
+          <div id="checklistContainer" class="checklist-grid">
+            <!-- Populated by app.js -->
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="toast-container no-print" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
