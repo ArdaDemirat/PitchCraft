@@ -135,6 +135,33 @@
     ctx.restore();
   }
 
+  function drawChevronArrow(ctx, cx, cy, w, h, dir, fill, stroke) {
+    const hw = w / 2;
+    const hh = h / 2;
+    const notch = w * 0.42;
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (dir === "left") ctx.scale(-1, 1);
+    ctx.beginPath();
+    ctx.moveTo(-hw, -hh);
+    ctx.lineTo(hw - notch, -hh);
+    ctx.lineTo(hw, 0);
+    ctx.lineTo(hw - notch, hh);
+    ctx.lineTo(-hw, hh);
+    ctx.lineTo(-hw + notch, 0);
+    ctx.closePath();
+    if (fill) {
+      ctx.fillStyle = fill;
+      ctx.fill();
+    }
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function formatMoney(value, currency = "$") {
     const abs = Math.round(value);
     return `${currency}${abs.toLocaleString("tr-TR")}`;
@@ -1185,6 +1212,452 @@
   }
 
   /* ========================================================================
+     7. COMPETITORS CORE ANALYSIS (NESTED ONION LAYERS DIAGRAM)
+     ======================================================================== */
+  function renderCoreAnalysis(ctx, chartData, projectTitle, theme) {
+    drawHeader(ctx, chartData.title, chartData.subtitle, projectTitle, theme);
+
+    const games = (chartData.games || []).slice(0, 3);
+    const labels = chartData.layerLabels || {};
+    const useClassic = chartData.useClassicColors !== false;
+
+    const palette = useClassic
+      ? {
+          progBg: "#bae6fd",
+          progText: "#0c4a6e",
+          collBg: "#fb923c",
+          collText: "#431407",
+          sideBg: "#fde68a",
+          sideText: "#422006",
+          coreBg: "#9333ea",
+          coreText: "#ffffff",
+          ringStroke: "rgba(255,255,255,0.45)"
+        }
+      : {
+          progBg: hexToRgba(theme.accents[0] || theme.primary, 0.22),
+          progText: theme.text,
+          collBg: hexToRgba(theme.accents[3] || "#f59e0b", 0.42),
+          collText: theme.text,
+          sideBg: hexToRgba(theme.accents[2] || "#10b981", 0.55),
+          sideText: theme.isDark ? "#f8fafc" : "#1f2937",
+          coreBg: theme.primary,
+          coreText: "#ffffff",
+          ringStroke: hexToRgba(theme.border, 0.8)
+        };
+
+    const centersX = games.length === 1 ? [800] : games.length === 2 ? [500, 1100] : [295, 800, 1305];
+    const bottomY = 556;
+    const layers = [
+      { key: "progression", label: labels.progression || "PROGRESSION", r: 172, bg: palette.progBg, fg: palette.progText, labelY: 235, valY: 255, maxW: 185, fontSize: 13.5, labelSize: 11.5, maxLines: 2 },
+      { key: "collectibles", label: labels.collectibles || "COLLECTIBLES", r: 132, bg: palette.collBg, fg: palette.collText, labelY: 314, valY: 334, maxW: 162, fontSize: 13, labelSize: 11.5, maxLines: 2 },
+      { key: "side", label: labels.side || "SIDE MECHANICS", r: 94, bg: palette.sideBg, fg: palette.sideText, labelY: 390, valY: 409, maxW: 134, fontSize: 12.5, labelSize: 11, maxLines: 2 },
+      { key: "core", label: labels.core || "CORE MECHANIC", r: 56, bg: palette.coreBg, fg: palette.coreText, labelY: 474, valY: 495, maxW: 92, fontSize: 12.5, labelSize: 10.5, maxLines: 3 }
+    ];
+
+    games.forEach((g, idx) => {
+      const cx = centersX[idx];
+      const isOurs = Boolean(g.isOurs);
+
+      // Game Title Pill / Header above circles
+      ctx.font = `800 19px ${FONT_FAMILY}`;
+      const titleTxt = isOurs ? `★ ${g.name || "Our Game"}` : g.name || `Rakip ${idx + 1}`;
+      const pillW = Math.min(420, ctx.measureText(titleTxt).width + 36);
+      fillRoundRect(
+        ctx,
+        cx - pillW / 2,
+        162,
+        pillW,
+        36,
+        18,
+        isOurs ? hexToRgba(theme.primary, 0.18) : theme.cardBg,
+        isOurs ? theme.primary : theme.border,
+        isOurs ? 2 : 1.5
+      );
+      ctx.textAlign = "center";
+      ctx.fillStyle = isOurs ? theme.primary : theme.text;
+      ctx.fillText(titleTxt, cx, 187);
+
+      // Draw 4 bottom-aligned tangent nested circles (outer to inner)
+      layers.forEach((layer, lIdx) => {
+        const cy = bottomY - layer.r;
+        ctx.save();
+        if (lIdx === 0) {
+          ctx.shadowColor = theme.isDark ? "rgba(0,0,0,0.45)" : "rgba(15,23,42,0.10)";
+          ctx.shadowBlur = 18;
+          ctx.shadowOffsetY = 6;
+        }
+        ctx.beginPath();
+        ctx.arc(cx, cy, layer.r, 0, Math.PI * 2);
+        ctx.fillStyle = layer.bg;
+        ctx.fill();
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, layer.r, 0, Math.PI * 2);
+        ctx.strokeStyle = isOurs && lIdx === 0 ? theme.primary : palette.ringStroke;
+        ctx.lineWidth = isOurs && lIdx === 0 ? 3 : 1.5;
+        ctx.stroke();
+
+        // Layer heading (e.g., PROGRESSION)
+        ctx.textAlign = "center";
+        ctx.font = `800 ${layer.labelSize}px ${FONT_FAMILY}`;
+        ctx.fillStyle = layer.fg;
+        ctx.globalAlpha = 0.85;
+        ctx.fillText(layer.label, cx, layer.labelY);
+        ctx.globalAlpha = 1;
+
+        // Game-specific mechanic inside layer
+        ctx.font = `${lIdx === 3 ? "700" : "600"} ${layer.fontSize}px ${FONT_FAMILY}`;
+        ctx.fillStyle = layer.fg;
+        drawWrappedText(ctx, g[layer.key] || "", cx, layer.valY, layer.maxW, 16, layer.maxLines, "center");
+      });
+
+      // Audience & Why Play Analysis Card below circles
+      const cardW = 436;
+      const cardH = 192;
+      const cardX = cx - cardW / 2;
+      const cardY = 574;
+      fillRoundRect(
+        ctx,
+        cardX,
+        cardY,
+        cardW,
+        cardH,
+        16,
+        theme.cardBg,
+        isOurs ? hexToRgba(theme.primary, 0.65) : theme.border,
+        isOurs ? 2 : 1.5
+      );
+
+      ctx.textAlign = "left";
+      ctx.font = `700 13px ${FONT_FAMILY}`;
+      ctx.fillStyle = theme.primary;
+      ctx.fillText("🎯 HEDEF KİTLE & OYUNCU TİPİ", cardX + 20, cardY + 30);
+
+      ctx.font = `500 14px ${FONT_FAMILY}`;
+      ctx.fillStyle = theme.text;
+      drawWrappedText(ctx, g.audience || "-", cardX + 20, cardY + 52, cardW - 40, 19, 2, "left");
+
+      ctx.font = `700 13px ${FONT_FAMILY}`;
+      ctx.fillStyle = theme.accents[2] || "#10b981";
+      ctx.fillText("💡 NEDEN OYNANIYOR & DESTEK", cardX + 20, cardY + 112);
+
+      ctx.font = `400 13.5px ${FONT_FAMILY}`;
+      ctx.fillStyle = theme.muted;
+      drawWrappedText(ctx, g.whyPlay || "-", cardX + 20, cardY + 134, cardW - 40, 19, 2, "left");
+    });
+
+    // Bottom Guiding Questions Banner
+    if (chartData.footerNote) {
+      fillRoundRect(
+        ctx,
+        64,
+        784,
+        W - 128,
+        74,
+        14,
+        hexToRgba(theme.primary, 0.08),
+        hexToRgba(theme.primary, 0.25),
+        1.5
+      );
+      ctx.textAlign = "left";
+      ctx.font = `700 13.5px ${FONT_FAMILY}`;
+      ctx.fillStyle = theme.primary;
+      ctx.fillText("🧭 SUNUMDA CEVAPLANACAK SORULAR", 88, 812);
+
+      ctx.font = `500 14.5px ${FONT_FAMILY}`;
+      ctx.fillStyle = theme.text;
+      drawWrappedText(ctx, chartData.footerNote, 88, 837, W - 176, 20, 1, "left");
+    }
+  }
+
+  /* ========================================================================
+     8. DETAILED BRANCHING GAME LOOP FLOWCHART
+     ======================================================================== */
+  function renderGameLoopFlow(ctx, chartData, projectTitle, theme, isTransparent) {
+    const isClassic = chartData.classicWireframe !== false;
+
+    if (isClassic && !isTransparent) {
+      ctx.fillStyle = "#f4f4f2";
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    const style = isClassic
+      ? {
+          titleColor: "#141413",
+          subColor: "#2e2e2c",
+          boxFill: "#a6a6a6",
+          boxSubFill: "#b3b3b3",
+          boxStroke: "#2f2f2e",
+          boxText: "#141413",
+          lineColor: "#262625",
+          chevronFill: "#a6a6a6",
+          chevronStroke: "#262625",
+          condFill: "#a6a6a6",
+          actFill: "#a6a6a6",
+          endFill: "#a6a6a6",
+          resFill: "#a6a6a6",
+          dotFill: "#a6a6a6"
+        }
+      : {
+          titleColor: theme.text,
+          subColor: theme.muted,
+          boxFill: theme.cardBg,
+          boxSubFill: theme.cardAlt,
+          boxStroke: theme.border,
+          boxText: theme.text,
+          lineColor: theme.muted,
+          chevronFill: theme.primary,
+          chevronStroke: theme.primary,
+          condFill: hexToRgba(theme.accents[2] || theme.primary, 0.16),
+          actFill: hexToRgba(theme.primary, 0.18),
+          endFill: theme.primary,
+          resFill: theme.cardAlt,
+          dotFill: theme.primary
+        };
+
+    // Header
+    if (isClassic) {
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      ctx.font = `700 34px ${FONT_FAMILY}`;
+      ctx.fillStyle = style.titleColor;
+      ctx.fillText(chartData.title || "Game loop", W / 2, 84);
+
+      if (chartData.subtitle) {
+        ctx.font = `italic 400 18px ${FONT_FAMILY}`;
+        ctx.fillStyle = style.subColor;
+        ctx.fillText(chartData.subtitle, W / 2, 122);
+      }
+    } else {
+      drawHeader(ctx, chartData.title, chartData.subtitle, projectTitle, theme);
+    }
+
+    const steps = chartData.steps && chartData.steps.length ? chartData.steps.slice(0, 5) : [{ title: "Start", subItems: [] }];
+    const branches = chartData.branches && chartData.branches.length ? chartData.branches.slice(0, 4) : [];
+
+    // Horizontal Layout Geometry
+    const k = steps.length;
+    const stepBoxH = 54;
+    const subBoxH = 44;
+    const subGap = 11;
+    const spineY = 485;
+
+    const maxSpineTotalW = 680;
+    const firstGap = k > 1 ? 42 : 0;
+    const otherGaps = Math.max(0, k - 2) * 14;
+    const stepW = Math.min(188, Math.floor((maxSpineTotalW - firstGap - otherGaps) / k));
+    const spineTotalW = k * stepW + firstGap + otherGaps;
+
+    const condW = 192;
+    const condToActGap = 24;
+    const actW = 192;
+    const forkOffset = branches.length ? 36 : 0;
+    const branchBlockW = branches.length ? forkOffset + condW + condToActGap + actW + 38 : 34;
+    const mergeToEndGap = 54;
+    const endW = 170;
+
+    const totalDiagramW = spineTotalW + branchBlockW + mergeToEndGap + endW;
+    const startX = Math.max(56, Math.round((W - totalDiagramW) / 2));
+
+    // Compute Spine Step Positions
+    let cursorX = startX;
+    const stepBoxes = steps.map((s, idx) => {
+      const box = { x: cursorX, y: spineY - stepBoxH / 2, w: stepW, h: stepBoxH, step: s };
+      cursorX += stepW + (idx === 0 ? firstGap : 14);
+      return box;
+    });
+    const lastStepRight = stepBoxes[stepBoxes.length - 1].x + stepW;
+
+    // Connectors between spine steps
+    for (let i = 0; i < stepBoxes.length - 1; i++) {
+      const a = stepBoxes[i];
+      const b = stepBoxes[i + 1];
+      ctx.strokeStyle = style.lineColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(a.x + a.w, spineY);
+      ctx.lineTo(b.x, spineY);
+      ctx.stroke();
+
+      if (i === 0) {
+        drawChevronArrow(ctx, (a.x + a.w + b.x) / 2, spineY, 24, 34, "right", style.chevronFill, style.chevronStroke);
+      }
+    }
+
+    // Draw Main Spine Step Boxes + Stacked Sub-Items
+    stepBoxes.forEach((b) => {
+      fillRoundRect(ctx, b.x, b.y, b.w, b.h, 8, style.boxFill, style.boxStroke, 1.8);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `600 16.5px ${FONT_FAMILY}`;
+      ctx.fillStyle = style.boxText;
+      const titleLines = getWrappedLines(ctx, b.step.title || "Adım", b.w - 16).slice(0, 2);
+      const titleStartY = spineY - ((titleLines.length - 1) * 18) / 2;
+      titleLines.forEach((ln, li) => ctx.fillText(ln, b.x + b.w / 2, titleStartY + li * 18));
+
+      const subs = (b.step.subItems || []).slice(0, 4);
+      subs.forEach((sub, sIdx) => {
+        const sy = b.y + b.h + 12 + sIdx * (subBoxH + subGap);
+        fillRoundRect(ctx, b.x, sy, b.w, subBoxH, 8, style.boxSubFill, style.boxStroke, 1.5);
+        ctx.font = `500 14.5px ${FONT_FAMILY}`;
+        ctx.fillStyle = style.boxText;
+        const subLines = getWrappedLines(ctx, sub, b.w - 16).slice(0, 2);
+        const subStartY = sy + subBoxH / 2 - ((subLines.length - 1) * 16) / 2;
+        subLines.forEach((ln, li) => ctx.fillText(ln, b.x + b.w / 2, subStartY + li * 16));
+      });
+    });
+
+    // Branches & Merge
+    const endX = startX + totalDiagramW - endW;
+    const mergeX = endX - mergeToEndGap;
+    const actX = lastStepRight + forkOffset + condW + condToActGap;
+    const condX = lastStepRight + forkOffset;
+    const forkX = lastStepRight + 18;
+
+    if (branches.length > 0) {
+      const m = branches.length;
+      let rowOffsets;
+      if (m === 1) rowOffsets = [0];
+      else if (m === 2) rowOffsets = [-76, 76];
+      else if (m === 3) rowOffsets = [-94, 0, 94];
+      else rowOffsets = [-138, -46, 46, 138];
+
+      const rowYs = rowOffsets.map((off) => spineY + off);
+      const topBranchY = rowYs[0];
+      const botBranchY = rowYs[rowYs.length - 1];
+
+      // Spine -> Fork vertical line
+      ctx.strokeStyle = style.lineColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(lastStepRight, spineY);
+      ctx.lineTo(forkX, spineY);
+      ctx.moveTo(forkX, topBranchY);
+      ctx.lineTo(forkX, botBranchY);
+      ctx.stroke();
+
+      // Merge vertical line
+      const resCenterY = m === 1 ? spineY + 86 : botBranchY;
+      ctx.beginPath();
+      ctx.moveTo(mergeX, topBranchY);
+      ctx.lineTo(mergeX, resCenterY);
+      ctx.stroke();
+
+      // Draw each branch row
+      branches.forEach((br, idx) => {
+        const ry = rowYs[idx];
+        const bH = 54;
+        const topY = ry - bH / 2;
+
+        // Horizontal connector from fork to condition, condition to action, action to merge
+        ctx.strokeStyle = style.lineColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(forkX, ry);
+        ctx.lineTo(condX, ry);
+        ctx.moveTo(condX + condW, ry);
+        ctx.lineTo(actX, ry);
+        ctx.moveTo(actX + actW, ry);
+        ctx.lineTo(mergeX, ry);
+        ctx.stroke();
+
+        // Condition Box
+        fillRoundRect(ctx, condX, topY, condW, bH, 8, style.condFill, style.boxStroke, 1.8);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `600 15.5px ${FONT_FAMILY}`;
+        ctx.fillStyle = style.boxText;
+        const condLines = getWrappedLines(ctx, br.condition || "Koşul", condW - 18).slice(0, 2);
+        const condStartY = ry - ((condLines.length - 1) * 18) / 2;
+        condLines.forEach((ln, li) => ctx.fillText(ln, condX + condW / 2, condStartY + li * 18));
+
+        // Action Box
+        fillRoundRect(ctx, actX, topY, actW, bH, 8, style.actFill, style.boxStroke, 1.8);
+        const actLines = getWrappedLines(ctx, br.action || "Eylem", actW - 18).slice(0, 2);
+        const actStartY = ry - ((actLines.length - 1) * 18) / 2;
+        actLines.forEach((ln, li) => ctx.fillText(ln, actX + actW / 2, actStartY + li * 18));
+      });
+
+      // Optional Result Box at bottom merge
+      if (chartData.resultLabel && chartData.resultLabel.trim()) {
+        const resW = 156;
+        const resH = 52;
+        const resX = Math.max(actX + actW + 18, mergeX - 24);
+        const resY = resCenterY - resH / 2;
+        fillRoundRect(ctx, resX, resY, resW, resH, 8, style.resFill, style.boxStroke, 1.8);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `600 16px ${FONT_FAMILY}`;
+        ctx.fillStyle = style.boxText;
+        ctx.fillText(chartData.resultLabel, resX + resW / 2, resCenterY);
+      }
+
+      // Merge line to End Box + Circle Dot + Chevron
+      ctx.strokeStyle = style.lineColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(mergeX, spineY);
+      ctx.lineTo(endX, spineY);
+      ctx.stroke();
+
+      // Merge node dot
+      ctx.beginPath();
+      ctx.arc(mergeX, spineY, 8, 0, Math.PI * 2);
+      ctx.fillStyle = style.dotFill;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = style.lineColor;
+      ctx.stroke();
+
+      drawChevronArrow(ctx, (mergeX + endX) / 2 + 2, spineY, 24, 34, "right", style.chevronFill, style.chevronStroke);
+    } else {
+      ctx.strokeStyle = style.lineColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(lastStepRight, spineY);
+      ctx.lineTo(endX, spineY);
+      ctx.stroke();
+      drawChevronArrow(ctx, (lastStepRight + endX) / 2, spineY, 24, 34, "right", style.chevronFill, style.chevronStroke);
+    }
+
+    // End Box (Next player / Sonraki Tur)
+    const endY = spineY - stepBoxH / 2;
+    fillRoundRect(ctx, endX, endY, endW, stepBoxH, 8, style.endFill, isClassic ? style.boxStroke : style.endFill, 1.8);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `700 17px ${FONT_FAMILY}`;
+    ctx.fillStyle = isClassic ? style.boxText : "#ffffff";
+    ctx.fillText(chartData.endLabel || "Next player", endX + endW / 2, spineY);
+
+    // Overhead Return Feedback Loop Line
+    const loopStartX = endX + endW / 2;
+    const loopEndX = stepBoxes[0].x + stepW / 2;
+    const loopTopY = 232;
+
+    ctx.strokeStyle = style.lineColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(loopStartX, endY);
+    ctx.lineTo(loopStartX, loopTopY);
+    ctx.lineTo(loopEndX, loopTopY);
+    ctx.lineTo(loopEndX, stepBoxes[0].y);
+    ctx.stroke();
+
+    // Left-pointing ribbon chevron on top return line
+    drawChevronArrow(ctx, (loopStartX + loopEndX) / 2, loopTopY, 28, 38, "left", style.chevronFill, style.chevronStroke);
+
+    // Bottom-right credit/footer tag
+    ctx.textBaseline = "alphabetic";
+    if (chartData.footerTag) {
+      ctx.textAlign = "right";
+      ctx.font = `700 14px ${FONT_FAMILY}`;
+      ctx.fillStyle = isClassic ? "#141413" : theme.muted;
+      ctx.fillText(chartData.footerTag, W - 56, H - 34);
+    }
+  }
+
+  /* ========================================================================
      PUBLIC DISPATCHER
      ======================================================================== */
   function renderChartToCanvas(canvas, state, activeChart, transparentOverride = null) {
@@ -1206,11 +1679,17 @@
       case "coreLoop":
         renderCoreLoop(ctx, chartData, state.projectTitle, theme);
         break;
+      case "gameLoopFlow":
+        renderGameLoopFlow(ctx, chartData, state.projectTitle, theme, isTransparent);
+        break;
       case "roadmap":
         renderRoadmap(ctx, chartData, state.projectTitle, theme);
         break;
       case "matrix":
         renderCompetitorMatrix(ctx, chartData, state.projectTitle, theme);
+        break;
+      case "coreAnalysis":
+        renderCoreAnalysis(ctx, chartData, state.projectTitle, theme);
         break;
       case "radar":
         renderRadarChart(ctx, chartData, state.projectTitle, theme);

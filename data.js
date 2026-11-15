@@ -408,6 +408,13 @@ const CHECKLIST_CATEGORIES = [
         linkTarget: "matrix"
       },
       {
+        id: "chk-core-analysis",
+        title: "Rakip Çekirdek & Katman Analizi (Onion Diyagramı) hazırlandı",
+        why: "Rakiplerin çekirdek mekaniği, yan mekanikleri ve ilerleme katmanlarının sizin projenizle nasıl ayrıştığını gösterir.",
+        linkType: "chart",
+        linkTarget: "coreAnalysis"
+      },
+      {
         id: "chk-radar",
         title: "Hedef Oyuncu / Özellik Radar Grafiği hazır",
         why: "Hedef kitlenin beklentileriyle oyunun odak noktalarının örtüştüğünü gösterir.",
@@ -466,6 +473,27 @@ const CHECKLIST_CATEGORIES = [
   }
 ];
 
+const CLASSIC_GAME_LOOP_TEMPLATE = {
+  title: "Game loop",
+  subtitle: "'A detailed series of actions that players are able to do.'",
+  classicWireframe: true,
+  steps: [
+    { title: "Player turn", subItems: [] },
+    { title: "Roll dice", subItems: ["Trade", "Auction", "Deposit etc."] },
+    { title: "Move to result", subItems: [] },
+    { title: "Location", subItems: [] }
+  ],
+  branches: [
+    { condition: "If another player", action: "Pay to opponent" },
+    { condition: "Empty", action: "Buy / Pass" },
+    { condition: "Already owned", action: "Build" },
+    { condition: "Chance etc.", action: "Draw card etc." }
+  ],
+  resultLabel: "Result",
+  endLabel: "Next player",
+  footerTag: "PitchCraft Studio"
+};
+
 const SAMPLE_PRESETS = {
   "chrono-blade": {
     projectTitle: "Chrono Blade",
@@ -484,6 +512,26 @@ const SAMPLE_PRESETS = {
           { icon: "👑", title: "Bölge Bossu ile Yüzleş", desc: "Kazanılan build ile zaman muhafızını alt et" },
           { icon: "🏛️", title: "Merkeze Dön & Aç", desc: "Kalıcı yetenek ağacı ve yeni silahları açarak güçlen" }
         ]
+      },
+      gameLoopFlow: {
+        title: "Chrono Blade — Detaylı Game Loop",
+        subtitle: "'Oyuncunun her odada ve karşılaşmada izleyebildiği dallanan eylem akışı.'",
+        classicWireframe: true,
+        steps: [
+          { title: "Odaya Giriş", subItems: [] },
+          { title: "Keşif & Savaş", subItems: ["Yakın Kombo", "Zaman Yankısı", "Dash / Kaçınma"] },
+          { title: "Oda Temizliği", subItems: [] },
+          { title: "Kapı / Ödül", subItems: [] }
+        ],
+        branches: [
+          { condition: "Normal Oda", action: "Kalıntı Seç" },
+          { condition: "Elit / Boss", action: "Silah Evrimi Al" },
+          { condition: "Mağaza Odası", action: "Takas / İyileş" },
+          { condition: "Oyuncu Ölürse", action: "Merkeze Dön" }
+        ],
+        resultLabel: "Build Güncelle",
+        endLabel: "Sonraki Oda",
+        footerTag: "Chrono Blade • Game Loop"
       },
       roadmap: {
         title: "Chrono Blade — Üretim Yol Haritası",
@@ -533,6 +581,51 @@ const SAMPLE_PRESETS = {
           { name: "Dead Cells", x: 74, y: 58, isOurs: false },
           { name: "Slay the Spire", x: 24, y: 82, isOurs: false },
           { name: "Klasik Dungeon Crawler", x: 30, y: 28, isOurs: false }
+        ]
+      },
+      coreAnalysis: {
+        title: "Rakip Çekirdek Katman Analizi (Competitors Core Analysis)",
+        subtitle: "Çekirdek Mekanik, Yan Mekanikler, Toplanabilirler ve İlerleme Karşılaştırması",
+        useClassicColors: true,
+        layerLabels: {
+          progression: "PROGRESSION",
+          collectibles: "COLLECTIBLES",
+          side: "SIDE MECHANICS",
+          core: "CORE MECHANIC"
+        },
+        footerNote:
+          "Hedef kitleleri kim? • Neden oynuyorlar? • Hangi oyuncu tiplerini kapsıyorlar? • Temel mekanik yan mekanikler ve ilerleme ile nasıl destekleniyor?",
+        games: [
+          {
+            name: "Chrono Blade (Bizim Oyun)",
+            isOurs: true,
+            progression: "Kalıcı Zaman Tapınağı & Silah Evrimleri",
+            collectibles: "Krono-Kalıntılar & Zaman Kristalleri",
+            side: "Zaman Yankısı Parry & Tuzak Yansıtma",
+            core: "Hızlı Yakın Dövüş & Zaman Bükme",
+            audience: "18-35 Yaş • Başaran & Ustalaşmak İsteyen Aksiyon Oyuncuları",
+            whyPlay: "Zamanı dondurup düşman saldırısını kendi lehine çevirme tatmini ve patlayıcı build sinerjileri."
+          },
+          {
+            name: "Hades (Rakip A)",
+            isOurs: false,
+            progression: "Mirror of Night & NPC Hikâye İlerlemesi",
+            collectibles: "Olimpos Lütuf (Boon) & Karanlık Puanı",
+            side: "Oda İçi Tuzak & İlişki Hediyeleri",
+            core: "İzometrik Dash & Silah Kombosu",
+            audience: "Hikâye + Hızlı Aksiyon Sevenler (Keşfeden & Başaran)",
+            whyPlay: "Her ölümde gelişen mitolojik diyaloglar ve akıcı silah temposu için tekrar oynanır."
+          },
+          {
+            name: "Dead Cells (Rakip B)",
+            isOurs: false,
+            progression: "Boss Hücreleri & Kalıcı Rün Yolları",
+            collectibles: "Silah Planları (Blueprints) & Parşömenler",
+            side: "Kalkan Parry & İkincil Yetenek Slotları",
+            core: "2D Metroidvania Platform & Savaş",
+            audience: "Yüksek Zorluk & Speedrun Odaklı Hardcore Oyuncular",
+            whyPlay: "Sıkı platform hissi, yüksek risk-ödül dengesi ve yüzlerce silah kombinasyonu için oynanır."
+          }
         ]
       },
       radar: {
@@ -648,6 +741,26 @@ const SAMPLE_PRESETS = {
           { icon: "🏡", title: "Fırını Güzelleştir", desc: "Kazançla yeni mobilyalar, fırınlar ve bahçe dekoru al" }
         ]
       },
+      gameLoopFlow: {
+        title: "Moonlight Bakery — Günlük Akış Döngüsü",
+        subtitle: "'Gündüz hazırlıktan gece servisine uzanan karar ve eylem dallanmaları.'",
+        classicWireframe: true,
+        steps: [
+          { title: "Sabah Hazırlık", subItems: [] },
+          { title: "Malzeme Topla", subItems: ["Orman Keşfi", "Sera Hasadı", "Pazar Takası"] },
+          { title: "Fırını Aç", subItems: [] },
+          { title: "Müşteri Talebi", subItems: [] }
+        ],
+        branches: [
+          { condition: "Özel Anı Talebi", action: "Duygu Tarifi Pişir" },
+          { condition: "Klasik Sipariş", action: "Hızlı Servis Et" },
+          { condition: "Kasabalı Sohbeti", action: "İlişki / Hikâye Aç" },
+          { condition: "Gece Biterse", action: "Kazanç & Dekor Al" }
+        ],
+        resultLabel: "Gün Özeti",
+        endLabel: "Yeni Gün",
+        footerTag: "Moonlight Bakery • Game Loop"
+      },
       roadmap: {
         title: "Moonlight Bakery — Yayın Yol Haritası",
         subtitle: "12 Aylık Bağımsız Geliştirme Planı",
@@ -696,6 +809,51 @@ const SAMPLE_PRESETS = {
           { name: "Overcooked", x: 14, y: 20, isOurs: false },
           { name: "Good Pizza, Great Pizza", x: 48, y: 45, isOurs: false },
           { name: "Stardew Valley", x: 70, y: 74, isOurs: false }
+        ]
+      },
+      coreAnalysis: {
+        title: "Rakip Çekirdek Katman Analizi (Moonlight Bakery)",
+        subtitle: "Pişirme Çekirdeği, Yan Mekanikler ve Uzun Vadeli Cozy İlerleme Kıyaslaması",
+        useClassicColors: true,
+        layerLabels: {
+          progression: "PROGRESSION",
+          collectibles: "COLLECTIBLES",
+          side: "SIDE MECHANICS",
+          core: "CORE MECHANIC"
+        },
+        footerNote:
+          "Hedef kitleleri kim? • Neden bu oyunları oynuyorlar? • Hangi oyuncu tiplerini kapsıyorlar? • Çekirdek mekanik yan mekanikler ve ilerlemeyle nasıl destekleniyor?",
+        games: [
+          {
+            name: "Moonlight Bakery (Bizim Oyun)",
+            isOurs: true,
+            progression: "Fırın Büyütme & Kasaba Hikâye Zinciri",
+            collectibles: "Büyülü Tarifler & Duygu Malzemeleri",
+            side: "Ormanda Toplama & Fırın Dekorasyonu",
+            core: "Dokunsal Tatlı Pişirme & Servis",
+            audience: "Cozy Kitle • Rahatlama & Hikâye Odaklı (Keşfeden & Sosyalleşen)",
+            whyPlay: "Zaman baskısı olmadan rahatlatıcı ASMR pişirme hissi ve duygusal kasaba dostlukları."
+          },
+          {
+            name: "Coffee Talk (Rakip A)",
+            isOurs: false,
+            progression: "Günlük Epizodik Hikâye Dallanması",
+            collectibles: "Gizli İçecek Tarifleri & Kısa Öyküler",
+            side: "Akıllı Telefon Akışı & Müzik Seçimi",
+            core: "İçecek Hazırlama & Diyalog Seçimi",
+            audience: "Görsel Roman & Lo-Fi Atmosfer Seven Oyuncular",
+            whyPlay: "Gece atmosferinde karakterlerin hayat dertlerini dinleyip doğru içeceği sunmak için."
+          },
+          {
+            name: "Good Pizza, Great Pizza (Rakip B)",
+            isOurs: false,
+            progression: "Yeni Malzemeler & Rakip Dükkân Hikâyesi",
+            collectibles: "Dekorasyon Eşyaları & Başarımlar",
+            side: "Teslimat Siparişleri & Bahçe Bakımı",
+            core: "Zamanlı Sipariş Hazırlama",
+            audience: "Mobil & Casual Yönetim Oyuncuları (Başaran)",
+            whyPlay: "Kısa seanslarda hızlı sipariş çözüp dükkân ekonomisini büyütmek için."
+          }
         ]
       },
       radar: {
@@ -807,6 +965,26 @@ const SAMPLE_PRESETS = {
           { icon: "🚀", title: "Yeni Üyeleri Çek", desc: "Paylaşılan raporlarla diğer ekipler de katılır" }
         ]
       },
+      gameLoopFlow: {
+        title: "FlowPulse — Ürün Akış & Karar Döngüsü",
+        subtitle: "'Toplantı tetikleyicisinden otomatik aksiyon dallanmalarına ürün akışı.'",
+        classicWireframe: true,
+        steps: [
+          { title: "Toplantı Biter", subItems: [] },
+          { title: "Notları Tara", subItems: ["Ses Özetle", "Kararları Ayıkla", "Sorumlu Ata"] },
+          { title: "Doğrulama", subItems: [] },
+          { title: "Öğe Türü", subItems: [] }
+        ],
+        branches: [
+          { condition: "Yeni Görev İse", action: "Linear/Jira'ya Ekle" },
+          { condition: "Doküman Kararı", action: "Notion'a Kaydet" },
+          { condition: "Acil Engel Varsa", action: "Slack Uyarısı At" },
+          { condition: "Hafta Sonu", action: "Yönetici Özeti Üret" }
+        ],
+        resultLabel: "Takip Paneli",
+        endLabel: "Yeni Döngü",
+        footerTag: "FlowPulse • Product Loop"
+      },
       roadmap: {
         title: "FlowPulse — İş Planı & Ürün Yol Haritası",
         subtitle: "Tohum Yatırım (Pre-Seed) Sonrası 12 Aylık Büyüme Planı",
@@ -855,6 +1033,51 @@ const SAMPLE_PRESETS = {
           { name: "Basit Not Uygulamaları", x: 80, y: 28, isOurs: false },
           { name: "Toplantı Kayıt Botları", x: 64, y: 46, isOurs: false },
           { name: "E-Tablo / Manuel Takip", x: 40, y: 18, isOurs: false }
+        ]
+      },
+      coreAnalysis: {
+        title: "Rakip Ürün Katman Analizi (Product Core Analysis)",
+        subtitle: "Çekirdek Değer, Yardımcı İş Akışları ve Uzun Vadeli Tutundurma Katmanları",
+        useClassicColors: true,
+        layerLabels: {
+          progression: "RETENTION / ÖLÇEK",
+          collectibles: "ÇIKTILAR / VARLIKLAR",
+          side: "YARDIMCI ARAÇLAR",
+          core: "ÇEKİRDEK DEĞER"
+        },
+        footerNote:
+          "Hedef kullanıcı kim? • Ürünü neden kullanıyorlar? • Hangi kullanıcı profillerini kapsıyor? • Çekirdek değer yan özellikler ve ölçeklenmeyle nasıl güçleniyor?",
+        games: [
+          {
+            name: "FlowPulse (Bizim Ürün)",
+            isOurs: true,
+            progression: "Ekip Analitiği & Haftalık Hedef Takibi",
+            collectibles: "Otomatik Özet Raporları & Karar Arşivi",
+            side: "Slack/Notion 2-Yönlü Senkron & Uyarılar",
+            core: "Toplantıdan Otomatik Görev Çıkarma",
+            audience: "10-100 Kişilik Teknoloji Ekipleri & Ürün Yöneticileri",
+            whyPlay: "Sıfır manuel veri girişiyle toplantı kararlarının takipsiz kaybolmasını önlediği için."
+          },
+          {
+            name: "Geleneksel PM Araçları",
+            isOurs: false,
+            progression: "Sprint Raporları & Kurumsal Portföy",
+            collectibles: "Ticket Geçmişi & Doküman Bağları",
+            side: "Özel Alanlar & Manuel Otomasyonlar",
+            core: "Manuel Görev & Pano Yönetimi",
+            audience: "Büyük Kurumsal Mühendislik Departmanları",
+            whyPlay: "Detaylı süreç kontrolü sunar ancak kurulum ve günlük güncelleme yükü ağırdır."
+          },
+          {
+            name: "Toplantı Kayıt Botları",
+            isOurs: false,
+            progression: "Aranabilir Toplantı Kütüphanesi",
+            collectibles: "Transkriptler & Video Klipler",
+            side: "Anahtar Kelime Etiketleme",
+            core: "Ses Kaydı & Metin Özeti",
+            audience: "Bireysel Satış & Danışmanlık Ekipleri",
+            whyPlay: "Konuşulanları kaydeder fakat iş takip araçlarına canlı aksiyon olarak aktarmaz."
+          }
         ]
       },
       radar: {

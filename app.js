@@ -80,6 +80,12 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && parsed.charts && parsed.gdd) {
+          if (!parsed.charts.coreAnalysis) {
+            parsed.charts.coreAnalysis = createDefaultState().charts.coreAnalysis;
+          }
+          if (!parsed.charts.gameLoopFlow) {
+            parsed.charts.gameLoopFlow = createDefaultState().charts.gameLoopFlow;
+          }
           return parsed;
         }
       }
@@ -193,8 +199,10 @@
      ------------------------------------------------------------------------ */
   const CHART_LABELS = {
     coreLoop: "🔄 Core Loop Verileri",
+    gameLoopFlow: "🔀 Detaylı Game Loop (Dallanan Akış)",
     roadmap: "🗺️ Yol Haritası (Roadmap)",
     matrix: "🎯 2x2 Rakip Matrisi",
+    coreAnalysis: "🧅 Rakip Çekirdek & Katman Analizi",
     radar: "🕸️ Oyuncu / Özellik Radarı",
     budget: "💰 Bütçe & Başa Baş Analizi",
     moscow: "📦 MoSCoW Kapsam Matrisi"
@@ -253,6 +261,86 @@
 
       if (data.nodes.length < 8) {
         html += `<button class="btn btn-secondary btn-sm" id="addChartItemBtn">+ Yeni Döngü Adımı Ekle</button>`;
+      }
+    } else if (activeChart === "gameLoopFlow") {
+      html += `
+        <button class="btn btn-secondary btn-sm" id="loadClassicGameLoopBtn">
+          🎲 Klasik Diyagramı Yükle (Player Turn / Roll Dice)
+        </button>
+        <label class="switch-label">
+          <input type="checkbox" data-chart-field="classicWireframe" ${data.classicWireframe !== false ? "checked" : ""} />
+          <span class="switch-slider"></span>
+          <span>Klasik Gri Akış Diyagramı Stili</span>
+        </label>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Döngü Sonu Kutusu (Sağ)</label>
+            <input class="input" data-chart-field="endLabel" value="${escapeHtml(data.endLabel || "Next player")}" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Alt Sonuç Kutusu (Opsiyonel)</label>
+            <input class="input" data-chart-field="resultLabel" value="${escapeHtml(data.resultLabel || "")}" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Sağ Alt İmza / Etiket</label>
+          <input class="input" data-chart-field="footerTag" value="${escapeHtml(data.footerTag || "")}" />
+        </div>
+        <div class="editor-section-title">Ana Akış Adımları (${(data.steps || []).length}/5)</div>
+      `;
+
+      (data.steps || []).forEach((st, idx) => {
+        html += `
+          <div class="item-card">
+            <div class="item-card-head">
+              <span>Adım ${idx + 1}</span>
+              ${
+                data.steps.length > 1
+                  ? `<button class="btn btn-danger-ghost" data-remove-item="steps" data-index="${idx}">Sil</button>`
+                  : ""
+              }
+            </div>
+            <input class="input" placeholder="Adım Başlığı" data-arr="steps" data-index="${idx}" data-prop="title" value="${escapeHtml(st.title)}" />
+            <div class="field-group">
+              <label class="field-label">Alt Seçenekler / Eylemler (Her satıra 1 madde, en fazla 4)</label>
+              <textarea class="textarea" style="min-height: 58px;" placeholder="Örn:\nTrade\nAuction\nDeposit etc." data-arr="steps" data-index="${idx}" data-prop="subItemsText">${escapeHtml((st.subItems || []).join("\n"))}</textarea>
+            </div>
+          </div>
+        `;
+      });
+
+      if ((data.steps || []).length < 5) {
+        html += `<button class="btn btn-secondary btn-sm" id="addStepBtn">+ Yeni Ana Adım Ekle</button>`;
+      }
+
+      html += `<div class="editor-section-title">Koşul & Eylem Dallanmaları (${(data.branches || []).length}/4)</div>`;
+      (data.branches || []).forEach((br, idx) => {
+        html += `
+          <div class="item-card">
+            <div class="item-card-head">
+              <span>Dal ${idx + 1}</span>
+              ${
+                data.branches.length > 0
+                  ? `<button class="btn btn-danger-ghost" data-remove-item="branches" data-index="${idx}">Sil</button>`
+                  : ""
+              }
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label">Koşul / Durum</label>
+                <input class="input" placeholder="Örn: Empty" data-arr="branches" data-index="${idx}" data-prop="condition" value="${escapeHtml(br.condition)}" />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Eylem / Sonuç</label>
+                <input class="input" placeholder="Örn: Buy / Pass" data-arr="branches" data-index="${idx}" data-prop="action" value="${escapeHtml(br.action)}" />
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      if ((data.branches || []).length < 4) {
+        html += `<button class="btn btn-secondary btn-sm" id="addBranchBtn">+ Yeni Koşul Dalı Ekle</button>`;
       }
     } else if (activeChart === "roadmap") {
       html += `<div class="editor-section-title">Aşamalar / Kilometre Taşları (${data.phases.length}/6)</div>`;
@@ -356,6 +444,85 @@
       if (data.competitors.length < 8) {
         html += `<button class="btn btn-secondary btn-sm" id="addChartItemBtn">+ Rakip / Proje Ekle</button>`;
       }
+    } else if (activeChart === "coreAnalysis") {
+      const labels = data.layerLabels || {};
+      html += `
+        <label class="switch-label">
+          <input type="checkbox" data-chart-field="useClassicColors" ${data.useClassicColors !== false ? "checked" : ""} />
+          <span class="switch-slider"></span>
+          <span>Klasik Diyagram Renkleri (Mavi / Turuncu / Sarı / Mor)</span>
+        </label>
+        <div class="editor-section-title">Katman İsimleri (Dıştan İçe)</div>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">En Dış Katman</label>
+            <input class="input" data-layer-label="progression" value="${escapeHtml(labels.progression || "PROGRESSION")}" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">3. Katman</label>
+            <input class="input" data-layer-label="collectibles" value="${escapeHtml(labels.collectibles || "COLLECTIBLES")}" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">2. Katman</label>
+            <input class="input" data-layer-label="side" value="${escapeHtml(labels.side || "SIDE MECHANICS")}" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Çekirdek (İç)</label>
+            <input class="input" data-layer-label="core" value="${escapeHtml(labels.core || "CORE MECHANIC")}" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Alt Rehber Sorular Notu</label>
+          <textarea class="textarea" style="min-height: 60px;" data-chart-field="footerNote">${escapeHtml(data.footerNote || "")}</textarea>
+        </div>
+        <div class="editor-section-title">Karşılaştırılan Oyunlar / Projeler (3 Sütun)</div>
+      `;
+
+      (data.games || []).forEach((g, idx) => {
+        html += `
+          <div class="item-card">
+            <div class="item-card-head">
+              <span>${g.isOurs ? "★ Bizim Oyun / Proje" : `Rakip ${idx}`}</span>
+              <label class="switch-label">
+                <input type="checkbox" data-arr="games" data-index="${idx}" data-prop="isOurs" ${g.isOurs ? "checked" : ""} />
+                <span class="switch-slider"></span>
+                <span>Biz</span>
+              </label>
+            </div>
+            <input class="input" placeholder="Oyun / Proje Adı" data-arr="games" data-index="${idx}" data-prop="name" value="${escapeHtml(g.name)}" />
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label">Core Mechanic (İç)</label>
+                <input class="input" data-arr="games" data-index="${idx}" data-prop="core" value="${escapeHtml(g.core)}" />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Side Mechanics (2.)</label>
+                <input class="input" data-arr="games" data-index="${idx}" data-prop="side" value="${escapeHtml(g.side)}" />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label">Collectibles (3.)</label>
+                <input class="input" data-arr="games" data-index="${idx}" data-prop="collectibles" value="${escapeHtml(g.collectibles)}" />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Progression (Dış)</label>
+                <input class="input" data-arr="games" data-index="${idx}" data-prop="progression" value="${escapeHtml(g.progression)}" />
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Hedef Kitle & Oyuncu Tipi</label>
+              <input class="input" data-arr="games" data-index="${idx}" data-prop="audience" value="${escapeHtml(g.audience)}" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">Neden Oynuyorlar? (Destek İlişkisi)</label>
+              <textarea class="textarea" style="min-height: 54px;" data-arr="games" data-index="${idx}" data-prop="whyPlay">${escapeHtml(g.whyPlay)}</textarea>
+            </div>
+          </div>
+        `;
+      });
     } else if (activeChart === "radar") {
       html += `
         <div class="field-row">
@@ -510,6 +677,16 @@
       });
     });
 
+    // CoreAnalysis layer labels
+    chartEditorContainer.querySelectorAll("[data-layer-label]").forEach((el) => {
+      el.addEventListener("input", () => {
+        if (!data.layerLabels) data.layerLabels = {};
+        data.layerLabels[el.dataset.layerLabel] = el.value;
+        saveState();
+        renderCanvas();
+      });
+    });
+
     // Array item properties
     chartEditorContainer.querySelectorAll("[data-arr]").forEach((el) => {
       const ev = el.type === "checkbox" || el.tagName === "SELECT" ? "change" : "input";
@@ -525,6 +702,12 @@
             .split("\n")
             .map((s) => s.trim())
             .filter(Boolean);
+        } else if (prop === "subItemsText") {
+          item.subItems = el.value
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .slice(0, 4);
         } else if (el.type === "checkbox") {
           item[prop] = el.checked;
         } else if (el.type === "number") {
@@ -585,6 +768,38 @@
         } else if (activeChart === "budget") {
           data.slices.push({ label: "Yeni Kalem", amount: 5000 });
         }
+        saveState();
+        renderChartEditor();
+        renderCanvas();
+      });
+    }
+
+    // GameLoopFlow custom buttons
+    const loadClassicBtn = document.getElementById("loadClassicGameLoopBtn");
+    if (loadClassicBtn) {
+      loadClassicBtn.addEventListener("click", () => {
+        state.charts.gameLoopFlow = JSON.parse(JSON.stringify(CLASSIC_GAME_LOOP_TEMPLATE));
+        saveState();
+        renderChartEditor();
+        renderCanvas();
+        showToast("Klasik Game Loop şablonu yüklendi!");
+      });
+    }
+
+    const addStepBtn = document.getElementById("addStepBtn");
+    if (addStepBtn) {
+      addStepBtn.addEventListener("click", () => {
+        data.steps.push({ title: "Yeni Adım", subItems: [] });
+        saveState();
+        renderChartEditor();
+        renderCanvas();
+      });
+    }
+
+    const addBranchBtn = document.getElementById("addBranchBtn");
+    if (addBranchBtn) {
+      addBranchBtn.addEventListener("click", () => {
+        data.branches.push({ condition: "Yeni Koşul", action: "Yeni Eylem" });
         saveState();
         renderChartEditor();
         renderCanvas();
@@ -1075,6 +1290,12 @@
         if (!parsed.charts || !parsed.gdd) {
           showToast("Geçersiz proje dosyası!");
           return;
+        }
+        if (!parsed.charts.coreAnalysis) {
+          parsed.charts.coreAnalysis = createDefaultState().charts.coreAnalysis;
+        }
+        if (!parsed.charts.gameLoopFlow) {
+          parsed.charts.gameLoopFlow = createDefaultState().charts.gameLoopFlow;
         }
         state = parsed;
         projectTitleInput.value = state.projectTitle || "Projem";
